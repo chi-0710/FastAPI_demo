@@ -14,5 +14,6 @@ htmlcov/
 .test-runs/
 .local/
 .idea/
+.deploy/
 node_modules/
 frontend/dist/
