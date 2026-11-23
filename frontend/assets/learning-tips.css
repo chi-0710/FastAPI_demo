@@ -1,0 +1,13 @@
+/* 学习提示：只改变文字和当前项，不改变侧栏高度。 */
+.learning-carousel .tip-heading{display:flex;align-items:center;min-height:28px;margin-bottom:12px;color:#5d8868}
+.learning-carousel .tip-slides{display:grid}
+.learning-carousel .tip-slide{grid-area:1 / 1;opacity:0;visibility:hidden;transform:translateY(5px);transition:opacity .35s ease,transform .35s ease,visibility .35s;pointer-events:none}
+.learning-carousel .tip-slide.active{opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
+.learning-carousel .tip-slide strong{font-size:.875rem;line-height:1.6}
+.learning-carousel .tip-slide p{white-space:pre-line;line-height:1.8;font-size:.75rem;margin-top:8px;color:#73816f}
+.learning-carousel .note-line{display:flex;gap:4px;margin-top:12px}
+.learning-carousel .note-line button{position:relative;flex:1;min-width:0;min-height:28px;border-radius:5px;padding:0}
+.learning-carousel .note-line button::before{content:"";position:absolute;left:0;right:0;top:12px;height:3px;border-radius:3px;background:#dfe7dd;transition:background .3s ease,transform .3s ease}
+.learning-carousel .note-line button.active::before{background:#779b75;transform:scaleY(1.35)}
+.learning-carousel .note-line button:hover::before{background:#a3b99d}
+.learning-carousel .note-line button.active:hover::before{background:#779b75}

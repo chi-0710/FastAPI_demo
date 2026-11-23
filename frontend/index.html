@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7f7">
+  <meta name="description" content="Flowspace — 让任务有序，让想法发生。FastAPI 工作台。">
+  <title>Flowspace · 工作台</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要内容</a>
+  <aside class="sidebar">
+    <a class="brand" href="#workspace"><span class="brand-mark" aria-hidden="true">f<span>·</span></span>flowspace<span class="brand-dot">®</span></a>
+    <div class="workspace-label"><span class="workspace-avatar">W</span><div>个人工作空间<small>Personal workspace</small></div><span class="mini-label">LOCAL</span></div>
+    <span class="nav-label">工作空间</span>
+    <nav aria-label="主导航">
+      <a href="#workspace" class="nav-link active" data-view="workspace"><span data-icon="grid"></span>工作台<span class="nav-indicator"></span></a>
+      <a href="#agent" class="nav-link" data-view="agent"><span data-icon="spark"></span>Agent 实验室<span class="tag">LAB</span></a>
+    </nav>
+    <div class="sidebar-bottom">
+      <section class="sidebar-note learning-carousel" id="learning-tips" aria-label="学习提示" aria-roledescription="轮播">
+        <div class="tip-heading"><span data-icon="layers"></span></div>
+        <div class="tip-slides"></div>
+        <div class="note-line" role="group" aria-label="选择学习提示"></div>
+        <span class="sr-only tip-announcement" aria-live="polite" aria-atomic="true"></span>
+      </section>
+      <a class="nav-link docs-link" href="/docs" target="_blank" rel="noopener" hidden><span data-icon="book"></span>接口文档<span class="external">↗</span></a>
+      <button class="profile" id="connection-button"><span class="profile-avatar" data-icon="key"></span><span><strong id="connection-label">登录工作空间</strong><small id="connection-detail">登录 / 注册</small></span><span data-icon="settings"></span></button>
+    </div>
+  </aside>
+  <div class="shell">
+    <header class="topbar"><div class="breadcrumb">工作空间 <span>/</span> <strong id="breadcrumb-current">工作台</strong></div><div class="top-actions"><span class="service-badge" id="service-status"><i></i>检查服务中</span><button class="icon-button" id="mobile-connection" aria-label="账号与登录" title="账号与登录"><span data-icon="key"></span></button><button class="icon-button" id="refresh-button" aria-label="刷新数据" title="刷新数据"><span data-icon="refresh"></span></button></div></header>
+    <main id="main">
+      <section id="workspace-view" class="view">
+        <div class="page-heading enter"><div><div class="eyebrow" id="today">YOUR PERSONAL WORKSPACE</div><h1>把想法，变成进展<span>。</span></h1><p>整理当下的任务，专注下一件值得做的事。</p></div><button class="button primary" id="new-task-button"><span data-icon="plus"></span>新建任务</button></div>
+        <section class="hero enter" aria-label="工作空间介绍"><div class="hero-copy"><span class="hero-kicker"><i></i> A LITTLE FOCUS, A LITTLE FLOW</span><h2>少一点忙乱，<br>多一点<span>井然有序。</span></h2><p>让任务在这里归位，让灵感有处可去。<br>你的下一步，从这里开始。</p><button class="text-button" id="focus-button">开始今日专注 <span data-icon="focus"></span></button></div><div class="hero-art" aria-hidden="true"><div class="orbital orbit-one"></div><div class="orbital orbit-two"></div><div class="orbit-core"><svg viewBox="0 0 100 100"><path d="M28 51 44 67 74 35"/></svg></div><div class="float-chip chip-one"><span data-icon="check"></span>保持专注</div><div class="float-chip chip-two"><span class="tiny-spark">✦</span> 让进展发生</div><span class="art-cross cross-one">+</span><span class="art-cross cross-two">+</span></div></section>
+        <div class="stats enter"><article class="stat"><div class="stat-icon mint" data-icon="layers"></div><div><span>本页任务</span><strong id="stat-total">—</strong></div><small>小步骤，大进展</small></article><article class="stat"><div class="stat-icon lavender" data-icon="check"></div><div><span>本页已完成</span><strong id="stat-done">—</strong></div><small>每一步都算数</small></article><article class="stat"><div class="stat-icon sand" data-icon="focus"></div><div><span>本页完成率</span><strong id="stat-rate">—</strong></div><div class="mini-progress"><div id="progress-bar"></div></div></article></div>
+        <div class="workspace-grid enter">
+          <section class="panel task-panel" aria-labelledby="tasks-heading"><div class="panel-heading"><div><h2 id="tasks-heading">任务清单 <span id="task-count" class="count">0</span></h2><p>清空脑海，逐件完成。</p></div><span class="subtle-label">YOUR NEXT STEPS</span></div><div class="task-toolbar"><div class="filters" role="group" aria-label="任务筛选"><button class="filter active" data-filter="all" aria-pressed="true">全部</button><button class="filter" data-filter="false" aria-pressed="false">进行中</button><button class="filter" data-filter="true" aria-pressed="false">已完成</button></div><label class="search"><span data-icon="search"></span><input id="task-search" type="search" placeholder="搜索本页任务" aria-label="搜索本页任务"></label></div><div id="task-list" class="task-list" aria-live="polite"></div><div class="pagination"><span id="page-label">连接后加载你的任务</span><div><button class="icon-button" id="prev-page" aria-label="上一页" disabled><span data-icon="left"></span></button><button class="icon-button" id="next-page" aria-label="下一页" disabled><span data-icon="right"></span></button></div></div></section>
+          <aside class="right-column"><section class="agent-card"><div class="agent-card-heading"><span class="agent-symbol" data-icon="spark"></span><span class="tag">EXPERIMENTAL</span></div><h2>留一点空间，<br>给新的可能。</h2><p>从一个问题出发，探索 AI<br>如何成为你的工作伙伴。</p><button class="button dark" id="explore-agent">探索 Agent 实验室<span data-icon="spark"></span></button><div class="agent-mode"><i></i><span id="agent-mode-label">正在获取运行模式</span></div></section><section class="tip-card"><span data-icon="sun"></span><div><strong>给自己一个小目标</strong><p>试着把大任务拆成 20 分钟内<br>就能完成的小事。</p></div></section></aside>
+        </div>
+      </section>
+      <section id="agent-view" class="view" hidden><div class="page-heading enter"><div><div class="eyebrow">A SPACE FOR POSSIBILITIES</div><h1>让想法，向前一步<span>。</span></h1><p>一个轻量的实验空间，探索你的 AI 工作伙伴。</p></div><span class="tag large" id="agent-view-mode">Agent</span></div><div class="agent-layout enter"><section class="panel agent-conversation"><div class="panel-heading"><div><h2><span data-icon="spark"></span> Agent 实验室</h2><p id="agent-description">正在检查执行器配置。</p></div><button class="text-button" id="clear-chat">清空对话</button></div><div id="messages" class="messages" aria-live="polite"><div class="chat-welcome"><div class="welcome-icon" data-icon="spark"></div><h2>下一件事，一起想想。</h2><p>写下你想探索的问题。<br>执行结果将在这里展示。</p></div></div><form id="agent-form" class="agent-composer"><label class="sr-only" for="prompt">输入你的问题</label><textarea id="prompt" maxlength="2000" rows="3" placeholder="写下你的想法…" required></textarea><div class="composer-bottom"><span>Enter 换行 · Ctrl / ⌘ + Enter 发送</span><button class="button primary" id="send-agent" type="submit">发送<span data-icon="spark"></span></button></div></form></section><aside class="agent-info"><span class="eyebrow">PLAYGROUND NOTES</span><h2>从一个好问题开始。</h2><p>清楚地描述目标、背景和期望的输出，让每次尝试更有方向。</p><div class="info-block"><span data-icon="layers"></span><strong>先明确目标</strong><p>你希望这次对话帮助你完成什么？</p></div><div class="info-block"><span data-icon="focus"></span><strong>再缩小范围</strong><p>一次专注一个问题，让反馈更具体。</p></div><div class="info-note">当前对话只保留在页面内，刷新后清空。模拟模式不会调用真实模型。</div></aside></div></section>
+      <footer><span><span class="footer-logo">f·</span> 为专注而设计，为可能而留白。</span><span>FLOWSPACE <i>·</i> POWERED BY FASTAPI</span></footer>
+    </main>
+  </div>
+  <dialog id="connection-dialog" aria-labelledby="auth-title">
+    <div class="dialog-heading"><span class="welcome-icon" data-icon="key"></span><button type="button" class="icon-button" data-close="connection-dialog" aria-label="关闭"><span data-icon="x"></span></button></div>
+    <h2 id="auth-title">欢迎回来</h2><p id="auth-description">登录后，继续你的下一步。</p>
+    <div id="auth-fields">
+      <div class="auth-switch" aria-label="账号操作"><button type="button" class="active" data-auth-mode="login" aria-pressed="true">登录</button><button type="button" data-auth-mode="register" aria-pressed="false">注册账号</button></div>
+      <form id="connection-form">
+        <label for="auth-username">用户名</label><input id="auth-username" name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9_]+" placeholder="3–32 位字母、数字或下划线" aria-describedby="username-hint"><small class="auth-hint" id="username-hint">用户名不区分大小写。</small>
+        <label for="auth-password">密码</label><div class="password-field"><input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="6" maxlength="128" placeholder="至少 6 个字符，需包含英文字母"><button type="button" class="password-toggle" data-password-toggle="auth-password" aria-controls="auth-password" aria-pressed="false" aria-label="显示密码">显示</button></div>
+        <div id="confirm-field" hidden><label for="auth-confirm">确认密码</label><div class="password-field"><input id="auth-confirm" type="password" autocomplete="new-password" minlength="6" maxlength="128" placeholder="再次输入密码"><button type="button" class="password-toggle" data-password-toggle="auth-confirm" aria-controls="auth-confirm" aria-pressed="false" aria-label="显示密码">显示</button></div></div>
+        <p class="form-error" id="connection-error" role="alert"></p><button class="button primary auth-submit" type="submit" id="connect-submit">登录工作空间</button>
+        <p class="auth-footnote">你的任务，保存在你的账号中。</p>
+      </form>
+    </div>
+    <div id="account-panel" hidden><div class="account-summary"><span class="profile-avatar" data-icon="layers"></span><div><strong id="account-username"></strong><small>个人工作空间</small></div></div><button type="button" class="button secondary auth-submit" id="disconnect-button">退出登录</button></div>
+  </dialog>
+  <dialog id="task-dialog"><form id="task-form"><div class="dialog-heading"><span class="eyebrow">ONE SMALL STEP</span><button type="button" class="icon-button" data-close="task-dialog" aria-label="关闭"><span data-icon="x"></span></button></div><h2 id="task-dialog-title">新建一个小目标</h2><p>不需要很宏大，清晰一点就好。</p><label for="task-title">任务名称</label><input id="task-title" maxlength="100" required placeholder="例如：读懂 FastAPI 的依赖注入"><p id="task-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="task-dialog">取消</button><button type="submit" class="button primary" id="save-task">创建任务</button></div></form></dialog>
+  <dialog id="delete-dialog"><form id="delete-form"><h2>删除这条任务？</h2><p id="delete-title"></p><p>删除后无法恢复。</p><div class="dialog-actions"><button type="button" class="button secondary" data-close="delete-dialog">保留任务</button><button type="submit" class="button danger" id="delete-confirm">确认删除</button></div></form></dialog>
+  <div id="toast" class="toast" role="status"></div>
+</body>
+</html>

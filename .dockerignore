@@ -1,0 +1,9 @@
+*
+!app/
+!app/**
+!migrations/
+!migrations/**
+!main.py
+!alembic.ini
+!requirements.lock
+**/__pycache__/
