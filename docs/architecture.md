@@ -15,7 +15,8 @@
 | Alembic 迁移、独立迁移任务 | 在线迁移编排与自动回滚平台 |
 | 账号会话、个人任务隔离、认证限流、分页、乐观锁 | 全站网关限流、业务审计存储 |
 | 请求 ID、脱敏 JSON 日志、健康检查 | Prometheus 指标、OpenTelemetry trace 后端与告警 |
-| Agent 协议、模拟适配器、异步超时 | 真实模型、工具执行、RAG、记忆、任务队列和 SSE |
+| Redis 缓存、会话缓存、Lua 原子限流、幂等键、Agent 任务队列与 SSE | 真实模型、工具执行、RAG、记忆 |
+| Agent 协议、模拟适配器、异步超时 | 真实模型适配器 |
 | SQLite 自动测试、PostgreSQL CI 配置、容器文件 | 本次环境中的 PostgreSQL / 容器实测与负载测试 |
 
 ## 为什么这样分层

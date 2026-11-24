@@ -40,12 +40,12 @@ async def test_production_cookie_flags(settings):
 
 
 async def test_login_http_limit_and_same_origin_docs(client):
-    from app.auth.repository import AuthRepository
-    from app.auth.service import AuthService
+    # HTTP 走 Redis 原子限流；同一窗口内先耗尽 ip 桶。
+    redis = client.app.state.redis.client
+    for _ in range(30):
+        from app.auth.rate_limiter import AuthRateLimiter
 
-    for _ in range(10):
-        async with client.app.state.db.sessions() as db:
-            await AuthService(AuthRepository(db), 8).throttle("login", "127.0.0.1", "tester")
+        await AuthRateLimiter(redis).consume("rl:login:ip:127.0.0.1", 30)
     result = await client.post(
         "/api/v1/auth/login",
         json={

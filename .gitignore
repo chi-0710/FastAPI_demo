@@ -1,19 +1,27 @@
-.venv/
+# Python
 __pycache__/
 *.py[cod]
+.venv/
 .pytest_cache/
-.env
-.env.*
-!.env.example
-*.db
-*.db-shm
-*.db-wal
 .ruff_cache/
-.coverage
-htmlcov/
+
+# 测试临时产物
 .test-runs/
+.acl-repair/
+
+# 本地配置与数据
+.env
+*.db
+
+# 前端
+frontend/node_modules/
+frontend/dist/
+
+# 部署密钥与本地运行时产物（勿提交）
+.deploy/
 .local/
 .idea/
-.deploy/
-node_modules/
-frontend/dist/
+.tmpcheck/
+
+# CI workflow 暂不入库(需 workflow scope 的凭据)
+.github/workflows/

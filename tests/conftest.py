@@ -7,8 +7,29 @@ from alembic.config import Config
 
 from app.core.config import Settings
 from app.main import create_app
+from tests.fake_redis import FakeRedis
 
 PASSWORD = "test-only-long-password-123"
+
+
+class _FakeRedisPool:
+    """替代 app.main.RedisPool，让测试无需真实 Redis。"""
+
+    def __init__(self, url: str):
+        self.client = FakeRedis()
+
+    async def ping(self):
+        await self.client.ping()
+
+    async def close(self):
+        await self.client.aclose()
+
+
+@pytest.fixture(autouse=True)
+def fake_redis_pool(monkeypatch):
+    # create_app 的 lifespan 在运行时调用 RedisPool，替换它即可注入内存替身。
+    monkeypatch.setattr("app.main.RedisPool", _FakeRedisPool)
+    return _FakeRedisPool
 
 
 @pytest.fixture

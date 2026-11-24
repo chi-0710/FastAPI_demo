@@ -11,13 +11,15 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from app.agents.service import AgentService, MockAgent
+from app.agent.queue import AgentQueue, run_worker
+from app.agent.service import AgentService, MockAgent
 from app.api.auth import auth
 from app.api.routes import api, health
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.core.logging import configure_logging
 from app.db import Database
+from app.redis import RedisPool
 
 logger = logging.getLogger("demo")
 
@@ -32,9 +34,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.password_slots = asyncio.Semaphore(4)
         runner = MockAgent() if settings.agent_backend == "mock" else None
         app.state.agent = AgentService(runner, settings.agent_timeout_seconds)
+        # Redis 可选：关闭时各能力模块回源数据库；ready 检查会报告未就绪。
+        app.state.redis = RedisPool(settings.redis_url.get_secret_value())
+        if settings.redis_enabled:
+            await app.state.redis.ping()
+        app.state.agent_queue = AgentQueue(app.state.redis.client)
+        # 后台 worker 消费 Agent 长任务；测试环境由测试自行驱动，避免后台线程干扰。
+        worker_task = None
+        if settings.redis_enabled and settings.app_env != "test":
+            worker_task = asyncio.create_task(
+                run_worker(
+                    app,
+                    reconcile_interval=settings.agent_reconcile_interval_seconds,
+                    stale_seconds=settings.agent_reconcile_stale_seconds,
+                )
+            )
         try:
             yield
         finally:
+            if worker_task is not None:
+                worker_task.cancel()
+                try:
+                    await worker_task
+                except asyncio.CancelledError:
+                    pass
+            await app.state.redis.close()
             await app.state.db.close()
 
     is_dev = settings.app_env != "production"

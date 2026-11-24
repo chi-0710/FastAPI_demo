@@ -1,8 +1,8 @@
 import asyncio
 from typing import Protocol
 
+from app.agent.schemas import AgentResponse
 from app.core.errors import AppError
-from app.schemas import AgentResponse
 
 
 class AgentRunner(Protocol):

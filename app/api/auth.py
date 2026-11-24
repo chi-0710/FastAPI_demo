@@ -1,41 +1,15 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints, field_validator
 
 from app.api.dependencies import check_origin, cookie_name, get_auth_service, require_session
+from app.auth.schemas import Credentials, RegistrationCredentials, SessionIdentity
 from app.auth.service import AuthService
 from app.core.errors import AppError
 
 auth = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 Auth = Annotated[AuthService, Depends(get_auth_service)]
-Identity = Annotated[tuple, Depends(require_session)]
-
-
-class Credentials(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    username: Annotated[
-        str,
-        StringConstraints(
-            strip_whitespace=True,
-            to_lower=True,
-            min_length=3,
-            max_length=32,
-            pattern=r"^[a-zA-Z0-9_]+$",
-        ),
-    ]
-    password: SecretStr = Field(min_length=1, max_length=128)
-
-
-class RegistrationCredentials(Credentials):
-    password: SecretStr = Field(min_length=6, max_length=128)
-
-    @field_validator("password")
-    @classmethod
-    def require_letter(cls, value: SecretStr) -> SecretStr:
-        if not any("a" <= char <= "z" or "A" <= char <= "Z" for char in value.get_secret_value()):
-            raise ValueError("密码需包含至少一个英文字母")
-        return value
+Identity = Annotated[SessionIdentity, Depends(require_session)]
 
 
 def session_payload(session, user):
@@ -80,12 +54,12 @@ async def login(data: Credentials, request: Request, response: Response, service
 
 @auth.get("/me")
 async def me(identity: Identity):
-    return session_payload(*identity)
+    return session_payload(identity.session, identity.user)
 
 
 @auth.post("/logout", status_code=204)
 async def logout(request: Request, response: Response, service: Auth, identity: Identity):
-    await service.logout(identity[0])
+    await service.logout(identity.session)
     response.delete_cookie(
         cookie_name(request),
         path="/",

@@ -69,8 +69,10 @@ flowchart LR
     B --> C[Service：业务规则、事务提交]
     C --> D[Repository：数据库读写]
     D --> E[(SQLite / PostgreSQL)]
+    C --> R[(Redis：缓存 / 限流 / 幂等 / 队列)]
     B --> F[AgentService：超时与执行接口]
     F --> G[MockAgent / 未来真实适配器]
+    R --> W[Agent worker：消费长任务]
 ```
 
 建议按以下顺序读代码，每次只追踪一个操作：
@@ -102,6 +104,9 @@ flowchart LR
 | PUT `/api/v1/todos/{id}` | 用版本号替换待办 |
 | DELETE `/api/v1/todos/{id}?version=2` | 用版本号删除，返回 204 |
 | POST `/api/v1/agent/invoke` | Agent 扩展入口，默认关闭 |
+| POST `/api/v1/agent/runs` | 提交 Agent 长任务（202 + run_id），需 Redis |
+| GET `/api/v1/agent/runs/{id}` | 查询长任务状态与结果 |
+| GET `/api/v1/agent/runs/{id}/events` | SSE 订阅任务状态事件 |
 
 命令行调用时，先用 `auth/login` 登录，将 Cookie 保存在 HTTP 客户端的会话中；把响应的 `csrf_token` 作为 `X-CSRF-Token` 请求头发送给写接口。不要把账号密码或 Cookie 放在 URL、日志、前端环境变量中。详见 [账号接口说明](docs/authentication.md)。
 
@@ -132,6 +137,30 @@ flowchart LR
 返回内容明确标记 `provider=mock`，只是原样响应的模拟器，未调用模型、工具或外部网络。默认 disabled 返回 503；执行超时返回 504；未知执行器异常返回脱敏的 500。生产配置拒绝 mock。
 
 真实 SDK、LangGraph 或其他框架应实现 `AgentRunner`，通过工厂注入。HTTP 层不依赖框架。长任务、流式输出、工具权限和预算的接入顺序详见 [架构说明](docs/architecture.md)。
+
+## 4.1 Redis 加速与协调层
+
+项目已接入 Redis（可选依赖，默认启用）。PostgreSQL 仍是唯一事实源，Redis 只承担四类职责：
+
+| 能力 | 实现 | 降级策略 |
+| --- | --- | --- |
+| Todo 列表/详情缓存 | Cache-aside + 版本化键，写后 `INCR` 版本使旧 key 失效 | 缓存不可用回源数据库 |
+| 认证会话缓存 | token digest 为 key，命中不再查库；登出即清除 | 回源 `login_sessions` 表 |
+| 认证限流 | Lua 脚本 `INCR + EXPIRE` 原子计数，替代数据库嵌套事务 | 不可用时拒绝请求（fail-closed） |
+| 幂等键 | `POST /todos` 的 `Idempotency-Key` 头，`SET NX EX` + 结果回放 | 不可用时拒绝写入 |
+| Agent 长任务 | Streams 消费组队列 + 状态 Hash + SSE Pub/Sub；run 事实落 `agent_runs` 表 | 不可用时返回 503 |
+
+配置（`.env`，环境变量优先）：
+
+```
+REDIS_URL=redis://:change-me@localhost:6379/0
+REDIS_ENABLED=true
+CACHE_TTL_SECONDS=60
+SESSION_CACHE_TTL_SECONDS=300
+IDEMPOTENCY_TTL_SECONDS=86400
+```
+
+生产环境强制 `REDIS_ENABLED=true`，且 `REDIS_URL` 必须是带认证的 `rediss://`（TLS）。Compose 已加入带 `requirepass` 与 AOF 持久化的 Redis 服务，并需要 `REDIS_PASSWORD` 环境变量。`/health/ready` 会检查 Redis 连通性。测试用进程内内存替身，无需真实 Redis；设计细节见 [Redis 接入方案](docs/redis-integration-plan.md)。
 
 ## 5. 测试与依赖
 
@@ -193,4 +222,4 @@ docker compose down
 .\.venv\Scripts\python.exe -m alembic upgrade head
 ```
 
-新增迁移后同步更新就绪检查中的预期 schema revision（当前为 0002），并运行迁移一致性测试。用户身份与资源归属已落地；下一阶段可补账号找回、OIDC，然后接真实 Agent 和任务系统。
+新增迁移后同步更新就绪检查中的预期 schema revision（当前为 0003），并运行迁移一致性测试。用户身份与资源归属已落地；下一阶段可补账号找回、OIDC，然后接真实 Agent 和任务系统。

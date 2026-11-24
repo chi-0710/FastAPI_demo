@@ -4,11 +4,15 @@ from typing import Annotated
 from fastapi import Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agent.queue import AgentQueue
 from app.auth.repository import AuthRepository
+from app.auth.schemas import SessionIdentity
 from app.auth.service import AuthService
 from app.core.errors import AppError
-from app.repositories import TodoRepository
-from app.services import TodoService
+from app.todos.cache import TodoCache
+from app.todos.idempotency import IdempotencyGuard
+from app.todos.repository import TodoRepository
+from app.todos.service import TodoService
 
 
 def cookie_name(request: Request) -> str:
@@ -32,26 +36,48 @@ async def get_session(request: Request):
         yield session
 
 
+async def get_redis(request: Request):
+    # Redis 客户端由应用 lifespan 中的连接池持有，这里只暴露引用。
+    return request.app.state.redis.client
+
+
 def get_auth_service(request: Request, session: Annotated[AsyncSession, Depends(get_session)]):
-    return AuthService(AuthRepository(session), request.app.state.settings.session_hours)
+    settings = request.app.state.settings
+    return AuthService(
+        AuthRepository(session),
+        settings.session_hours,
+        redis=request.app.state.redis.client if settings.redis_enabled else None,
+        cache_ttl=(0 if settings.app_env == "test" else settings.session_cache_ttl_seconds),
+    )
 
 
 async def require_session(
     request: Request,
     auth: Annotated[AuthService, Depends(get_auth_service)],
     x_csrf_token: Annotated[str | None, Header()] = None,
-):
-    session, user = await auth.resolve(request.cookies.get(cookie_name(request)))
+) -> SessionIdentity:
+    identity = await auth.resolve(request.cookies.get(cookie_name(request)))
     if request.method not in {"GET", "HEAD", "OPTIONS"}:
         check_origin(request)
         supplied = x_csrf_token or ""
-        if not secrets.compare_digest(supplied.encode(), session.csrf_token.encode()):
+        if not secrets.compare_digest(supplied.encode(), identity.session.csrf_token.encode()):
             raise AppError(403, "invalid_csrf", "页面会话已变化，请刷新后再试")
-    return session, user
+    return identity
+
+
+def get_agent_queue(request: Request) -> AgentQueue:
+    return request.app.state.agent_queue
 
 
 def get_todo_service(
+    request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
-    identity: Annotated[tuple, Depends(require_session)],
+    identity: Annotated[SessionIdentity, Depends(require_session)],
 ):
-    return TodoService(TodoRepository(session, identity[1].id))
+    settings = request.app.state.settings
+    redis = request.app.state.redis.client if settings.redis_enabled else None
+    return TodoService(
+        TodoRepository(session, identity.user.id),
+        cache=TodoCache(redis, identity.user.id, settings.cache_ttl_seconds),
+        idempotency=IdempotencyGuard(redis, identity.user.id, settings.idempotency_ttl_seconds),
+    )

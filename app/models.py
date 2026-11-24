@@ -46,3 +46,23 @@ class AuthRateLimit(Base):
     bucket: Mapped[str] = mapped_column(String(64), primary_key=True)
     attempts: Mapped[int] = mapped_column(Integer)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class AgentRun(Base):
+    """Agent 长任务事实记录；队列/状态缓存由 Redis 承担。"""
+
+    __tablename__ = "agent_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    prompt: Mapped[str] = mapped_column(String(2000))
+    status: Mapped[str] = mapped_column(String(32), index=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    output: Mapped[str | None] = mapped_column(String(4000))
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )

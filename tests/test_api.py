@@ -7,14 +7,14 @@ from alembic import command
 from alembic.config import Config
 from pydantic import ValidationError
 
-from app.agents.service import AgentService, MockAgent
+from app.agent.service import AgentService, MockAgent
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.main import create_app
 from app.models import Todo
-from app.repositories import TodoRepository
-from app.schemas import TodoReplace
-from app.services import TodoService
+from app.todos.repository import TodoRepository
+from app.todos.schemas import TodoReplace
+from app.todos.service import TodoService
 
 
 async def test_crud_filter_paging_and_conflict(client):
@@ -142,6 +142,7 @@ def test_production_guards_and_docs():
         _env_file=None,
         app_env="production",
         database_url="postgresql+asyncpg://u:p@localhost/test",
+        redis_url="rediss://:secret@localhost:6379/0",
     )
     assert create_app(settings).openapi_url is None
     with pytest.raises(ValidationError):
