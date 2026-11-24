@@ -22,6 +22,3 @@ frontend/dist/
 .local/
 .idea/
 .tmpcheck/
-
-# CI workflow 暂不入库(需 workflow scope 的凭据)
-.github/workflows/
